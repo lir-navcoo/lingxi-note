@@ -221,7 +221,6 @@ export function SettingsDialog() {
   const [tempModel, setTempModel] = React.useState(models[7]);
   const [tempKeys, setTempKeys] = React.useState<Record<string, string>>({
     aiGatewayApiKey: '',
-    uploadthing: '',
   });
   const [showKey, setShowKey] = React.useState<Record<string, boolean>>({});
   const [open, setOpen] = React.useState(false);
@@ -279,9 +278,7 @@ export function SettingsDialog() {
           <a
             className="flex items-center"
             href={
-              service === 'aiGatewayApiKey'
-                ? 'https://vercel.com/docs/ai-gateway'
-                : 'https://uploadthing.com/dashboard'
+              'https://vercel.com/docs/ai-gateway'
             }
             rel="noopener noreferrer"
             target="_blank"

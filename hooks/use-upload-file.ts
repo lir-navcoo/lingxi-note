@@ -1,22 +1,17 @@
 import * as React from 'react';
 
-import type { OurFileRouter } from '@/lib/uploadthing';
-import type {
-  ClientUploadedFileData,
-  UploadFilesOptions,
-} from 'uploadthing/types';
-
-import { generateReactHelpers } from '@uploadthing/react';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
-export type UploadedFile<T = unknown> = ClientUploadedFileData<T>;
+export interface UploadedFile<T = unknown> {
+  key: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  customData?: T;
+}
 
-interface UseUploadFileProps
-  extends Pick<
-    UploadFilesOptions<OurFileRouter['editorUploader']>,
-    'headers' | 'onUploadBegin' | 'onUploadProgress' | 'skipPolling'
-  > {
+interface UseUploadFileProps {
   onUploadComplete?: (file: UploadedFile) => void;
   onUploadError?: (error: unknown) => void;
 }
@@ -24,51 +19,33 @@ interface UseUploadFileProps
 export function useUploadFile({
   onUploadComplete,
   onUploadError,
-  ...props
 }: UseUploadFileProps = {}) {
   const [uploadedFile, setUploadedFile] = React.useState<UploadedFile>();
   const [uploadingFile, setUploadingFile] = React.useState<File>();
-  const [progress, setProgress] = React.useState<number>(0);
+  const [progress, setProgress] = React.useState(0);
   const [isUploading, setIsUploading] = React.useState(false);
 
-  async function uploadThing(file: File) {
+  async function uploadFile(file: File) {
     setIsUploading(true);
     setUploadingFile(file);
+    setProgress(0);
 
     try {
-      const res = await uploadFiles('editorUploader', {
-        ...props,
-        files: [file],
-        onUploadProgress: ({ progress }) => {
-          setProgress(Math.min(progress, 100));
-        },
-      });
+      const formData = new FormData();
+      formData.append('file', file);
+      const uploaded = await uploadWithProgress(formData, setProgress);
 
-      const uploaded = res[0];
       setUploadedFile(uploaded);
       onUploadComplete?.(uploaded);
-
+      toast.success('文件上传成功', { description: file.name });
       return uploaded;
     } catch (error) {
-      const errorMessage = getErrorMessage(error);
-
-      const message =
-        errorMessage.length > 0
-          ? errorMessage
-          : '上传失败，请稍后重试。';
-
-      const isTokenError = /token|unauthorized|forbidden|401|403/i.test(
-        errorMessage
-      );
-
-      toast.error(isTokenError ? '图片上传配置无效' : '图片上传失败', {
-        description: isTokenError
-          ? '请配置有效的 UPLOADTHING_TOKEN，并重启开发服务器后重试。'
-          : message,
+      const message = getErrorMessage(error);
+      toast.error('图片上传失败', {
+        description: message,
         duration: 6000,
       });
       onUploadError?.(error);
-
       return undefined;
     } finally {
       setProgress(0);
@@ -81,30 +58,46 @@ export function useUploadFile({
     isUploading,
     progress,
     uploadedFile,
-    uploadFile: uploadThing,
+    uploadFile,
     uploadingFile,
   };
 }
 
-export const { uploadFiles, useUploadThing } =
-  generateReactHelpers<OurFileRouter>();
+function uploadWithProgress(
+  formData: FormData,
+  onProgress: (progress: number) => void
+): Promise<UploadedFile> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', '/api/upload');
+    request.responseType = 'json';
 
-export function getErrorMessage(err: unknown) {
-  const unknownError = 'Something went wrong, please try again later.';
+    request.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    });
 
-  if (err instanceof z.ZodError) {
-    const errors = err.issues.map((issue) => issue.message);
+    request.addEventListener('load', () => {
+      const body = request.response as { error?: string } | UploadedFile | null;
+      if (request.status >= 200 && request.status < 300 && body && 'url' in body) {
+        resolve(body);
+        return;
+      }
 
-    return errors.join('\n');
-  }
-  if (err instanceof Error) {
-    return err.message;
-  }
-  return unknownError;
+      reject(new Error(body && 'error' in body ? body.error : '上传失败，请稍后重试。'));
+    });
+    request.addEventListener('error', () => reject(new Error('网络连接失败，请检查 Supabase 配置。')));
+    request.addEventListener('abort', () => reject(new Error('上传已取消。')));
+    request.send(formData);
+  });
 }
 
-export function showErrorToast(err: unknown) {
-  const errorMessage = getErrorMessage(err);
+export function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return '上传失败，请稍后重试。';
+}
 
-  return toast.error(errorMessage);
+export function showErrorToast(error: unknown) {
+  return toast.error(getErrorMessage(error));
 }

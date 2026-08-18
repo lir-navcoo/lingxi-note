@@ -10,7 +10,7 @@
 - 富文本块编辑器与自动保存
 - 表格、代码块、数学公式、链接、媒体、目录等 Plate.js 插件
 - Markdown、DOCX 等内容处理能力
-- 通过 UploadThing 上传图片、文档、音视频等文件
+- 通过 Supabase Storage 上传图片、文档、音视频等文件
 - AI 编辑命令与 Copilot 接口（部分前端逻辑仍使用模拟响应）
 
 ## 技术栈
@@ -19,7 +19,7 @@
 - Plate.js 53
 - Tailwind CSS 4、Radix UI、Lucide React
 - Supabase PostgreSQL
-- UploadThing
+- Supabase Storage
 - 自建用户表、HS256 JWT、HttpOnly Cookie
 
 ## 环境要求
@@ -53,7 +53,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 AUTH_JWT_SECRET=replace-with-a-long-random-secret
 
-UPLOADTHING_TOKEN=your-uploadthing-token
+SUPABASE_STORAGE_BUCKET=note-media
 
 # 可选：启用真实 AI Gateway 请求时配置
 AI_GATEWAY_API_KEY=your-ai-gateway-api-key
@@ -61,7 +61,7 @@ AI_GATEWAY_API_KEY=your-ai-gateway-api-key
 
 安全注意：
 
-- `SUPABASE_SERVICE_ROLE_KEY`、`AUTH_JWT_SECRET`、`UPLOADTHING_TOKEN` 只能在服务端使用。
+- `SUPABASE_SERVICE_ROLE_KEY`、`AUTH_JWT_SECRET` 只能在服务端使用。
 - 不要给这些变量添加 `NEXT_PUBLIC_` 前缀。
 - 不要提交包含真实密钥的 `.env.local`。
 
@@ -109,7 +109,7 @@ pnpm lint    # 执行 ESLint 检查
 | `/api/auth/me` | `GET` | 获取当前用户 |
 | `/api/notes` | `GET`、`POST` | 查询和创建笔记 |
 | `/api/notes/[id]` | `GET`、`PUT`、`DELETE` | 查询、更新和删除单篇笔记 |
-| `/api/uploadthing` | `GET`、`POST` | UploadThing 上传处理器 |
+| `/api/upload` | `POST` | Supabase Storage 文件上传 |
 | `/api/ai/command` | `POST` | AI 编辑命令 |
 | `/api/ai/copilot` | `POST` | AI Copilot 接口 |
 
@@ -121,7 +121,7 @@ pnpm lint    # 执行 ESLint 检查
 
 ## 文件上传
 
-上传端点由 `lib/uploadthing.ts` 中的 `editorUploader` 定义，支持图片、文本、Blob、PDF、视频和音频。使用前必须配置有效的 `UPLOADTHING_TOKEN`，修改环境变量后需要重启开发服务器。
+上传端点为 `/api/upload`，文件会按用户 ID 保存到 Supabase Storage 的 `note-media` 存储桶。服务端使用 `SUPABASE_SERVICE_ROLE_KEY`，本地 Supabase 需要先创建同名公开存储桶，或让接口自动创建。
 
 ## 项目结构
 
@@ -134,7 +134,7 @@ hooks/                 React Hooks
 lib/auth/              用户、密码、JWT 和会话逻辑
 lib/supabase/          Supabase 服务端访问
 lib/notes.ts           笔记 API 客户端
-lib/uploadthing.ts     UploadThing 文件路由
+app/api/upload/        Supabase Storage 上传接口
 supabase/              数据库初始化 SQL
 proxy.ts               路由鉴权与会话处理
 ```
