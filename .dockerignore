@@ -1,0 +1,17 @@
+.git
+.gitignore
+.github
+.codebuddy
+.next
+node_modules
+coverage
+out
+build
+.vercel
+.env
+.env.*
+!.env.local.example
+*.log
+*.pem
+.DS_Store
+README.md

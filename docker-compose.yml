@@ -1,0 +1,143 @@
+name: lingxi-note
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8081
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:${SUPABASE_PORT:-8000}
+      SUPABASE_INTERNAL_URL: http://supabase-kong:8000
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-note-media}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
+    ports:
+      - "${APP_PORT:-8081}:8081"
+    depends_on:
+      supabase-kong:
+        condition: service_healthy
+      supabase-init:
+        condition: service_completed_successfully
+
+  supabase-db:
+    image: supabase/postgres:17.6.1.136
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: supabase_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+      - ./supabase/docker-roles.sql:/docker-entrypoint-initdb.d/00-supabase-roles.sql:ro
+      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/90-lingxi-schema.sql:ro
+      - ./supabase/users.sql:/docker-entrypoint-initdb.d/91-lingxi-users.sql:ro
+      - ./supabase/docker-grants.sql:/docker-entrypoint-initdb.d/92-lingxi-grants.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supabase_admin -h localhost -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  supabase-rest:
+    image: postgrest/postgrest:v14.12
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+
+  supabase-storage:
+    image: supabase/storage-api:v1.60.4
+    restart: unless-stopped
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://supabase-rest:3000
+      PGRST_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      AUTH_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      PGOPTIONS: -c search_path=storage,public
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_TENANT_ID: local
+      REGION: local
+      GLOBAL_S3_BUCKET: local
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+      REQUEST_ALLOW_X_FORWARDED_PATH: "true"
+      STORAGE_PUBLIC_URL: http://localhost:${SUPABASE_PORT:-8000}
+    volumes:
+      - supabase-storage-data:/var/lib/storage
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      supabase-rest:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  supabase-init:
+    image: supabase/postgres:17.6.1.136
+    restart: "no"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./supabase/docker-storage-init.sh:/docker-storage-init.sh:ro
+    entrypoint: ["/bin/sh", "/docker-storage-init.sh"]
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      supabase-storage:
+        condition: service_healthy
+
+  supabase-kong:
+    image: kong:2.8.1
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_PLUGINS: cors,key-auth,acl
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    volumes:
+      - ./supabase/kong.yml:/home/kong/template.yml:ro
+    command: >-
+      sh -c 'sed "s|SUPABASE_ANON_KEY_PLACEHOLDER|$$SUPABASE_ANON_KEY|g; s|SUPABASE_SERVICE_KEY_PLACEHOLDER|$$SUPABASE_SERVICE_KEY|g" /home/kong/template.yml > /home/kong/kong.yml && /docker-entrypoint.sh kong docker-start'
+    ports:
+      - "${SUPABASE_PORT:-8000}:8000"
+    depends_on:
+      supabase-rest:
+        condition: service_started
+      supabase-storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  supabase-db-data:
+  supabase-storage-data:
