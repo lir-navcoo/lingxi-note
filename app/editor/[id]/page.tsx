@@ -111,7 +111,7 @@ export default function EditorPage({
             onDelete={handleDelete}
             onSignOut={handleSignOut}
           />
-          <div className="min-h-0 flex-1 bg-background">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
             {current ? (
               <PlateEditor
                 key={id}

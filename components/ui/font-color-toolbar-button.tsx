@@ -195,7 +195,10 @@ export function FontColorToolbarButton({
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-[280px]">
+      <DropdownMenuContent
+        align="start"
+        className="w-[360px] max-w-[calc(100vw-16px)] rounded-md border border-slate-200 p-1 shadow-none"
+      >
         <ColorPicker
           clearColor={clearColor}
           color={selectedColor || color}
@@ -405,7 +408,7 @@ function ColorCustom({
                 size: 'icon',
                 variant: 'outline',
               }),
-              'flex size-8 items-center justify-center rounded-full'
+              'flex size-9 items-center justify-center rounded-full'
             )}
             onSelect={(e) => {
               e.preventDefault();
@@ -481,7 +484,7 @@ function ColorDropdownMenuItem({
           size: 'icon',
           variant: 'outline',
         }),
-        'my-1 flex size-6 items-center justify-center rounded-full border border-muted border-solid p-0 transition-all hover:scale-125',
+        'my-1 flex size-7 items-center justify-center rounded-full border border-muted border-solid p-0 transition-all hover:scale-110',
         !isBrightColor && 'border-transparent text-white',
         className
       )}

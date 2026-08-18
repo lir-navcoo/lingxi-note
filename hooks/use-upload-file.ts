@@ -44,50 +44,23 @@ export function useUploadFile({
         },
       });
 
-      setUploadedFile(res[0]);
+      const uploaded = res[0];
+      setUploadedFile(uploaded);
+      onUploadComplete?.(uploaded);
 
-      onUploadComplete?.(res[0]);
-
-      return uploadedFile;
+      return uploaded;
     } catch (error) {
       const errorMessage = getErrorMessage(error);
 
       const message =
         errorMessage.length > 0
           ? errorMessage
-          : 'Something went wrong, please try again later.';
+          : '上传失败，请稍后重试。';
 
       toast.error(message);
-
       onUploadError?.(error);
 
-      // Mock upload for unauthenticated users
-      // toast.info('User not logged in. Mocking upload process.');
-      const mockUploadedFile = {
-        key: 'mock-key-0',
-        appUrl: `https://mock-app-url.com/${file.name}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-      } as UploadedFile;
-
-      // Simulate upload progress
-      let progress = 0;
-
-      const simulateProgress = async () => {
-        while (progress < 100) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          progress += 2;
-          setProgress(Math.min(progress, 100));
-        }
-      };
-
-      await simulateProgress();
-
-      setUploadedFile(mockUploadedFile);
-
-      return mockUploadedFile;
+      return undefined;
     } finally {
       setProgress(0);
       setIsUploading(false);

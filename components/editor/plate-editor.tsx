@@ -78,25 +78,29 @@ export function PlateEditor({ noteId, initialValue, onSaved }: PlateEditorProps)
 
   return (
     <Plate key={noteId} editor={editor} onChange={handleChange}>
-      <div className="flex h-9 shrink-0 items-center justify-end border-b border-slate-200 px-4 text-xs text-muted-foreground">
-        {saveState === 'saving' && (
-          <span className="flex items-center gap-1.5">
-            <Loader2 className="size-3.5 animate-spin" />
-            保存中…
-          </span>
-        )}
-        {saveState === 'saved' && (
-          <span className="flex items-center gap-1.5">
-            <Check className="size-3.5 text-emerald-600" />
-            已自动保存
-          </span>
-        )}
-        {saveState === 'error' && <span className="text-red-600">保存失败，请检查网络</span>}
-      </div>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="flex h-9 shrink-0 items-center justify-end border-b border-slate-200 px-4 text-xs text-muted-foreground">
+          {saveState === 'saving' && (
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="size-3.5 animate-spin" />
+              保存中…
+            </span>
+          )}
+          {saveState === 'saved' && (
+            <span className="flex items-center gap-1.5">
+              <Check className="size-3.5 text-emerald-600" />
+              已自动保存
+            </span>
+          )}
+          {saveState === 'error' && (
+            <span className="text-red-600">保存失败，请检查网络</span>
+          )}
+        </div>
 
-      <EditorContainer variant="default">
-        <Editor variant="default" />
-      </EditorContainer>
+        <EditorContainer variant="default" className="h-auto min-h-0 flex-1">
+          <Editor variant="default" />
+        </EditorContainer>
+      </div>
 
       <SettingsDialog />
     </Plate>
