@@ -13,7 +13,17 @@ function safeFileName(name: string) {
 async function ensureBucket(supabase: ReturnType<typeof createAdminClient>) {
   const { data, error } = await supabase.storage.getBucket(BUCKET);
 
-  if (data) return null;
+  if (data) {
+    if (data.public) return null;
+
+    const { error: updateError } = await supabase.storage.updateBucket(BUCKET, {
+      public: true,
+      fileSizeLimit: `${MAX_FILE_SIZE}`,
+    });
+
+    return updateError ?? null;
+  }
+
   if (error && !/not found|does not exist/i.test(error.message)) return error;
 
   const { error: createError } = await supabase.storage.createBucket(BUCKET, {
