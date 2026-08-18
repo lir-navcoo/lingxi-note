@@ -57,7 +57,16 @@ export function useUploadFile({
           ? errorMessage
           : '上传失败，请稍后重试。';
 
-      toast.error(message);
+      const isTokenError = /token|unauthorized|forbidden|401|403/i.test(
+        errorMessage
+      );
+
+      toast.error(isTokenError ? '图片上传配置无效' : '图片上传失败', {
+        description: isTokenError
+          ? '请配置有效的 UPLOADTHING_TOKEN，并重启开发服务器后重试。'
+          : message,
+        duration: 6000,
+      });
       onUploadError?.(error);
 
       return undefined;
