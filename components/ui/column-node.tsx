@@ -115,7 +115,7 @@ const ColumnDragHandle = React.memo(function ColumnDragHandle() {
           </Button>
         </TooltipTrigger>
 
-        <TooltipContent>Drag to move column</TooltipContent>
+        <TooltipContent>拖动以移动分栏</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

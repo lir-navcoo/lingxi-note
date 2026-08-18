@@ -97,11 +97,11 @@ export function MediaToolbar({
             <FloatingMediaPrimitive.EditButton
               className={buttonVariants({ size: 'sm', variant: 'ghost' })}
             >
-              Edit link
+              编辑链接
             </FloatingMediaPrimitive.EditButton>
 
             <CaptionButton size="sm" variant="ghost">
-              Caption
+              添加说明
             </CaptionButton>
 
             <Separator orientation="vertical" className="mx-1 h-6" />

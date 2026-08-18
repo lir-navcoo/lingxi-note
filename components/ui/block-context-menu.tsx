@@ -113,7 +113,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                 setValue('askAI');
               }}
             >
-              Ask AI
+              AI 助手
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
@@ -123,7 +123,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                 editor.tf.focus();
               }}
             >
-              Delete
+              删除
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
@@ -132,34 +132,34 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   .blockSelection.duplicate();
               }}
             >
-              Duplicate
+              创建副本
               {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
             </ContextMenuItem>
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>转换为</ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
                 <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>
-                  Paragraph
+                  正文
                 </ContextMenuItem>
 
                 <ContextMenuItem onClick={() => handleTurnInto(KEYS.h1)}>
-                  Heading 1
+                  标题 1
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleTurnInto(KEYS.h2)}>
-                  Heading 2
+                  标题 2
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleTurnInto(KEYS.h3)}>
-                  Heading 3
+                  标题 3
                 </ContextMenuItem>
                 <ContextMenuItem
                   onClick={() => handleTurnInto(KEYS.blockquote)}
                 >
-                  Blockquote
+                  引用
                 </ContextMenuItem>
                 <ContextMenuItem
                   onClick={() => handleTurnInto(KEYS.codeDrawing)}
                 >
-                  Code Drawing
+                  代码绘图
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -173,7 +173,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   .blockSelection.setIndent(1)
               }
             >
-              Indent
+              增加缩进
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() =>
@@ -182,19 +182,19 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   .blockSelection.setIndent(-1)
               }
             >
-              Outdent
+              减少缩进
             </ContextMenuItem>
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Align</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>对齐方式</ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
                 <ContextMenuItem onClick={() => handleAlign('left')}>
-                  Left
+                  左对齐
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleAlign('center')}>
-                  Center
+                  居中对齐
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleAlign('right')}>
-                  Right
+                  右对齐
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>

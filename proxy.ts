@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/auth/session';
 import { verifySession } from '@/lib/auth/jwt';
 
-// 免鉴权路径：登录页、鉴权 API、静态资源。
-const PUBLIC_PATHS = ['/login', '/api/auth'];
+// 免鉴权路径：登录页、公开预览、鉴权 API、静态资源。
+const PUBLIC_PATHS = ['/login', '/preview', '/api/auth'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
